@@ -81,19 +81,3 @@ Open your browser and access the local server path:
 
 http://localhost/Sales_app/index.php
 
-
-📁 Project Structure
-
-Sales_app/
-├── uploads/               # Product image uploads
-├── add_product.php        # Form to add new products
-├── add_to_cart.php       # Add items to shopping cart
-├── cart.php               # Shopping cart view
-├── checkout.php           # Checkout functionality
-├── connection.php         # MySQL connection setup
-├── edit_product.php       # Edit product details
-├── index.php              # Main landing / dashboard page
-├── login.php              # User authentication (Login)
-├── logout.php             # Session termination
-├── signup.php             # User registration
-└── update_cart.php        # Modify cart item quantities
