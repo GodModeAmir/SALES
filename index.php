@@ -109,8 +109,6 @@
                                     <?php endif; ?>
                                 </p>
                                 
-
-                                <!-- Add to Cart form -->
                                                                 <!-- Edit + Add to Cart -->
                                 <div class="mt-auto">
                                     <a href="edit_product.php?id=<?= (int)$p['id'] ?>"
