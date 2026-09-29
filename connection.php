@@ -1,9 +1,9 @@
 <?php
     $host = '127.0.0.1';
-    $port = '3307';   // change to 3307 if XAMPP shows MySQL on a different port
+    $port = '3307';   
     $db   = 'sales_project';
     $user = 'root';
-    $pass = '';       // XAMPP default: empty password
+    $pass = '';       
 
     $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
@@ -16,7 +16,6 @@
     try {
         $pdo = new PDO($dsn, $user, $pass, $options);
     } catch (PDOException $e) {
-        // Stop here — never let the script continue without a database
         die('Database connection failed: ' . $e->getMessage());
     }
 ?>

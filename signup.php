@@ -10,7 +10,6 @@
         $username = trim($_POST['username']);
         $password = trim($_POST['password']);
 
-        // Basic validation
         if(empty($f_name) || empty($l_name) || empty($email) || empty($username) || empty($password)){
             $error = "All fields are required.";
         } else {
@@ -18,18 +17,15 @@
                 $sql = "INSERT INTO users (f_name, l_name, email, username, password)
                         VALUES (:f_name, :l_name, :email, :username, :password)";
                 
-                // FIXED: Changed $stmt to $pdo here
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     ':f_name' => $f_name,
                     ':l_name' => $l_name,
                     ':email' => $email,
                     ':username' => $username,
-                    // Note: In production, use password_hash($password, PASSWORD_DEFAULT) for security
                     ':password' => $password 
                 ]);
 
-                // FIXED: Wrapped in quotes and capitalized Location
                 header("Location: login.php");
                 exit();
             } catch (PDOException $e) {

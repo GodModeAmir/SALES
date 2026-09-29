@@ -8,11 +8,9 @@
 
     $userId = (int)$_SESSION['user_id'];
 
-    // ---------- Fetch products ----------
     $stmt = $pdo->query("SELECT id, name, description, price, stock, image FROM products ORDER BY id DESC");
     $products = $stmt->fetchAll();
 
-    // ---------- Cart count for THIS user only (navbar badge) ----------
     $stmt = $pdo->prepare("
         SELECT COALESCE(SUM(cd.cqty), 0)
         FROM cart_master cm
@@ -22,7 +20,6 @@
     $stmt->execute([$userId]);
     $cartCount = (int)$stmt->fetchColumn();
 
-    // Flash message (set by add_product.php / add_to_cart.php redirects)
     $flash = $_SESSION['flash'] ?? null;
     unset($_SESSION['flash']);
 ?>

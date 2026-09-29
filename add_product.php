@@ -7,7 +7,7 @@
         exit();
     }
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header("Location: dashboard.php");
+        header("Location: index.php");
         exit();
     }
 
@@ -50,7 +50,7 @@
 
     if ($errors) {
         $_SESSION['flash'] = ['type' => 'danger', 'message' => implode(' ', $errors)];
-        header("Location: dashboard.php");
+        header("Location: index.php");
         exit();
     }
 
@@ -60,6 +60,6 @@
     $stmt->execute([$name, $description, $price, $stock, $imagePath]);
 
     $_SESSION['flash'] = ['type' => 'success', 'message' => "Product \"{$name}\" added."];
-    header("Location: dashboard.php");
+    header("Location: index.php");
     exit();
 ?>

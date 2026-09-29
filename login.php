@@ -19,7 +19,7 @@
 
               
                 if($user && $user['password'] === $password) {
-                    $_SESSION['user_id'] = $user['id']; // Change to matches your table's PK column name
+                    $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     header("Location: index.php"); 
                     exit();

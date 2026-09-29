@@ -58,7 +58,6 @@
         $stmt->execute([$userId, $total]);
         $orderId = (int)$pdo->lastInsertId();
 
-        // 2) Order lines + atomic stock decrement
         $lineStmt  = $pdo->prepare("INSERT INTO order_details (order_id, prod_id, qty, price) VALUES (?, ?, ?, ?)");
         $stockStmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");
 
