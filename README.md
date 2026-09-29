@@ -82,7 +82,7 @@ cd Sales_app
 Download the project's SQL database:
 
 **📥 Database:**  
-https://www.mediafire.com/file/821e865mhrox9dx/sales_project.sql/file
+https://www.mediafire.com/file/pcuga5rsildcz5u/sales_project+(1).sql/file
 
 Save the downloaded file as:
 
