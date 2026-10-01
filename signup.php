@@ -1,38 +1,33 @@
 <?php
-    include 'connection.php';
+include 'connection.php';
 
-    $error = '';
+$error = '';
 
-    if(isset($_POST['save'])){
-        $f_name = trim($_POST['f_name']);
-        $l_name = trim($_POST['l_name']);
-        $email = trim($_POST['email']);
-        $username = trim($_POST['username']);
-        $password = trim($_POST['password']);
+if (isset($_POST['save'])) {
+    $f_name   = trim($_POST['f_name']);
+    $l_name   = trim($_POST['l_name']);
+    $email    = trim($_POST['email']);
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-        if(empty($f_name) || empty($l_name) || empty($email) || empty($username) || empty($password)){
-            $error = "All fields are required.";
-        } else {
-            try {
-                $sql = "INSERT INTO users (f_name, l_name, email, username, password)
-                        VALUES (:f_name, :l_name, :email, :username, :password)";
-                
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    ':f_name' => $f_name,
-                    ':l_name' => $l_name,
-                    ':email' => $email,
-                    ':username' => $username,
-                    ':password' => $password 
-                ]);
+    if (empty($f_name) || empty($l_name) || empty($email) || empty($username) || empty($password)) {
+        $error = "All fields are required.";
+    } else {
+        try {
+            $sql = "INSERT INTO users (f_name, l_name, email, username, password)
+                    VALUES (?, ?, ?, ?, ?)";
 
-                header("Location: login.php");
-                exit();
-            } catch (PDOException $e) {
-                $error = "Registration failed: " . $e->getMessage();
-            }
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('sssss', $f_name, $l_name, $email, $username, $password);
+            $stmt->execute();
+
+            header("Location: login.php");
+            exit();
+        } catch (mysqli_sql_exception $e) {
+            $error = "Registration failed: " . $e->getMessage();
         }
     }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,7 +47,7 @@
                 <p class="text-muted">Please fill in this form to register.</p>
             </div>
 
-            <?php if(!empty($error)): ?>
+            <?php if (!empty($error)): ?>
                 <div class="alert alert-danger py-2"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
@@ -84,9 +79,12 @@
                 </div>
 
                 <button type="submit" name="save" class="btn btn-primary w-100 py-2 fw-semibold">Sign Up</button>
-                
+
                 <div class="text-center mt-3">
-                    <p class="small text-muted mb-0">Already have an account? <a href="login.php" class="text-decoration-none fw-semibold">Log In</a></p>
+                    <p class="small text-muted mb-0">
+                        Already have an account?
+                        <a href="login.php" class="text-decoration-none fw-semibold">Log In</a>
+                    </p>
                 </div>
             </form>
         </div>

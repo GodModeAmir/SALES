@@ -1,101 +1,115 @@
 <?php
-    session_start();
-    include 'connection.php';
+session_start();
+include 'connection.php';
 
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: login.php");
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Verify user still exists
+$stmt = $conn->prepare("SELECT id FROM users WHERE id = ?");
+$stmt->bind_param('i', $_SESSION['user_id']);
+$stmt->execute();
+
+if (!$stmt->get_result()->fetch_assoc()) {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id          = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $name        = trim($_POST['name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $price       = filter_input(INPUT_POST, 'price', FILTER_VALIDATE_FLOAT);
+    $stock       = filter_input(INPUT_POST, 'stock', FILTER_VALIDATE_INT);
+
+    if (!$id || $name === '' || $price === false || $price < 0 || $stock === false || $stock < 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Please fill in all fields correctly.'];
+        header("Location: edit_product.php?id=" . ($id ?: 0));
         exit();
     }
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
-    $stmt->execute([(int)$_SESSION['user_id']]);
-    if (!$stmt->fetch()) {
-        session_unset();
-        session_destroy();
-        header("Location: login.php");
-        exit();
-    }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $id          = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
-        $name        = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $price       = filter_input(INPUT_POST, 'price', FILTER_VALIDATE_FLOAT);
-        $stock       = filter_input(INPUT_POST, 'stock', FILTER_VALIDATE_INT);
-
-        if (!$id || $name === '' || $price === false || $price < 0 || $stock === false || $stock < 0) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Please fill in all fields correctly.'];
-            header("Location: edit_product.php?id=" . ($id ?: 0));
+    $imagePath = null;
+    if (!empty($_FILES['image']['name'])) {
+        if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Image upload failed.'];
+            header("Location: edit_product.php?id=$id");
             exit();
         }
-
-        $imagePath = null;
-        if (!empty($_FILES['image']['name'])) {
-            if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Image upload failed.'];
-                header("Location: edit_product.php?id=$id");
-                exit();
-            }
-            if ($_FILES['image']['size'] > 2 * 1024 * 1024) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Image must be 2MB or smaller.'];
-                header("Location: edit_product.php?id=$id");
-                exit();
-            }
-            $finfo   = new finfo(FILEINFO_MIME_TYPE);
-            $mime    = $finfo->file($_FILES['image']['tmp_name']);
-            $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-            if (!isset($allowed[$mime])) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Only JPG, PNG or WebP images are allowed.'];
-                header("Location: edit_product.php?id=$id");
-                exit();
-            }
-            if (!is_dir('uploads')) {
-                mkdir('uploads', 0777, true);
-            }
-            $imagePath = 'uploads/' . uniqid('product_', true) . '.' . $allowed[$mime];
-            if (!move_uploaded_file($_FILES['image']['tmp_name'], $imagePath)) {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Could not save the uploaded image.'];
-                header("Location: edit_product.php?id=$id");
-                exit();
-            }
+        if ($_FILES['image']['size'] > 2 * 1024 * 1024) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Image must be 2MB or smaller.'];
+            header("Location: edit_product.php?id=$id");
+            exit();
         }
-
-        if ($imagePath) {
-            $stmt = $pdo->prepare("SELECT image FROM products WHERE id = ?");
-            $stmt->execute([$id]);
-            $oldImage = $stmt->fetchColumn();
-
-            $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ?, image = ? WHERE id = ?");
-            $stmt->execute([$name, $description, $price, $stock, $imagePath, $id]);
-
-            if ($oldImage && strpos($oldImage, 'uploads/') === 0 && file_exists($oldImage)) {
-                unlink($oldImage);
-            }
-        } else {
-            $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ? WHERE id = ?");
-            $stmt->execute([$name, $description, $price, $stock, $id]);
+        $finfo   = new finfo(FILEINFO_MIME_TYPE);
+        $mime    = $finfo->file($_FILES['image']['tmp_name']);
+        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (!isset($allowed[$mime])) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Only JPG, PNG or WebP images are allowed.'];
+            header("Location: edit_product.php?id=$id");
+            exit();
         }
-
-        $_SESSION['flash'] = ['type' => 'success', 'message' => "Product \"$name\" updated."];
-        header("Location: index.php");
-        exit();
+        if (!is_dir('uploads')) {
+            mkdir('uploads', 0777, true);
+        }
+        $imagePath = 'uploads/' . uniqid('product_', true) . '.' . $allowed[$mime];
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $imagePath)) {
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Could not save the uploaded image.'];
+            header("Location: edit_product.php?id=$id");
+            exit();
+        }
     }
 
-    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-    if (!$id) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'No product specified.'];
-        header("Location: index.php");
-        exit();
+    if ($imagePath) {
+        // Get old image path
+        $stmt = $conn->prepare("SELECT image FROM products WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_row();
+        $oldImage = $row ? $row[0] : null;
+
+        // Update with new image
+        $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ?, image = ? WHERE id = ?");
+        $stmt->bind_param('ssdssi', $name, $description, $price, $stock, $imagePath, $id);
+        $stmt->execute();
+
+        // Delete old image file
+        if ($oldImage && strpos($oldImage, 'uploads/') === 0 && file_exists($oldImage)) {
+            unlink($oldImage);
+        }
+    } else {
+        // Update without changing image
+        $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, stock = ? WHERE id = ?");
+        $stmt->bind_param('ssdii', $name, $description, $price, $stock, $id);
+        $stmt->execute();
     }
 
-    $stmt = $pdo->prepare("SELECT id, name, description, price, stock, image FROM products WHERE id = ?");
-    $stmt->execute([$id]);
-    $product = $stmt->fetch();
+    $_SESSION['flash'] = ['type' => 'success', 'message' => "Product \"$name\" updated."];
+    header("Location: index.php");
+    exit();
+}
 
-    if (!$product) {
-        $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Product not found.'];
-        header("Location: index.php");
-        exit();
-    }
+// GET request: show edit form
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+if (!$id) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'No product specified.'];
+    header("Location: index.php");
+    exit();
+}
+
+$stmt = $conn->prepare("SELECT id, name, description, price, stock, image FROM products WHERE id = ?");
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$product = $stmt->get_result()->fetch_assoc();
+
+if (!$product) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Product not found.'];
+    header("Location: index.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

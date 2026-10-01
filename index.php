@@ -1,27 +1,32 @@
 <?php
-    session_start();
-    include 'connection.php';
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: login.php");
-        exit();
-    }
+session_start();
+include 'connection.php';
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    $userId = (int)$_SESSION['user_id'];
+$userId = (int)$_SESSION['user_id'];
 
-    $stmt = $pdo->query("SELECT id, name, description, price, stock, image FROM products ORDER BY id DESC");
-    $products = $stmt->fetchAll();
+// No parameters, so a plain query() is fine
+$result = $conn->query("SELECT id, name, description, price, stock, image FROM products ORDER BY id DESC");
+$products = $result->fetch_all(MYSQLI_ASSOC);
 
-    $stmt = $pdo->prepare("
-        SELECT COALESCE(SUM(cd.cqty), 0)
-        FROM cart_master cm
-        JOIN cart_details cd ON cd.cart_id = cm.cart_id
-        WHERE cm.user_id = ?
-    ");
-    $stmt->execute([$userId]);
-    $cartCount = (int)$stmt->fetchColumn();
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(cd.cqty), 0)
+    FROM cart_master cm
+    JOIN cart_details cd ON cd.cart_id = cm.cart_id
+    WHERE cm.user_id = ?
+");
+$stmt->bind_param('i', $userId);
+$stmt->execute();
 
-    $flash = $_SESSION['flash'] ?? null;
-    unset($_SESSION['flash']);
+// Equivalent to PDO's fetchColumn()
+$row = $stmt->get_result()->fetch_row();
+$cartCount = (int)($row[0] ?? 0);
+
+$flash = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -81,8 +86,6 @@
                 <?php foreach ($products as $p): ?>
                     <div class="col">
                         <div class="card h-100 shadow-sm">
-                            <!-- Default image: falls back to placeholder.svg if image is NULL,
-                                 empty, or the file was deleted from disk -->
                             <img src="<?= htmlspecialchars($p['image'] ?: 'uploads/placeholder.svg') ?>"
                                  onerror="this.onerror=null; this.src='uploads/placeholder.svg';"
                                  class="card-img-top"
@@ -106,7 +109,7 @@
                                     <?php endif; ?>
                                 </p>
                                 
-                                                                <!-- Edit + Add to Cart -->
+                                <!-- Edit + Add to Cart -->
                                 <div class="mt-auto">
                                     <a href="edit_product.php?id=<?= (int)$p['id'] ?>"
                                        class="btn btn-outline-secondary btn-sm w-100 mb-2">

@@ -1,42 +1,48 @@
 <?php
-    session_start();
-    include 'connection.php';
+session_start();
+include 'connection.php';
 
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: login.php");
-        exit();
-    }
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
-    $stmt->execute([(int)$_SESSION['user_id']]);
-    if (!$stmt->fetch()) {
-        session_unset();
-        session_destroy();
-        header("Location: login.php");
-        exit();
-    }
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    $userId = (int)$_SESSION['user_id'];
-    
-    $stmt = $pdo->prepare("
-        SELECT cd.prod_id, cd.cqty, p.name, p.price, p.stock, p.image
-        FROM cart_master cm
-        JOIN cart_details cd ON cd.cart_id = cm.cart_id
-        JOIN products p ON p.id = cd.prod_id
-        WHERE cm.user_id = ?
-        ORDER BY cd.prod_id
-    ");
-    $stmt->execute([$userId]);
-    $items = $stmt->fetchAll();
+$userId = (int)$_SESSION['user_id'];
 
-    $total     = 0;
-    $cartCount = 0;
-    foreach ($items as $it) {
-        $total     += $it['price'] * $it['cqty'];
-        $cartCount += (int)$it['cqty'];
-    }
+// Verify the user still exists
+$stmt = $conn->prepare("SELECT id FROM users WHERE id = ?");
+$stmt->bind_param('i', $userId);
+$stmt->execute();
 
-    $flash = $_SESSION['flash'] ?? null;
-    unset($_SESSION['flash']);
+if (!$stmt->get_result()->fetch_assoc()) {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+// Get cart items
+$stmt = $conn->prepare("
+    SELECT cd.prod_id, cd.cqty, p.name, p.price, p.stock, p.image
+    FROM cart_master cm
+    JOIN cart_details cd ON cd.cart_id = cm.cart_id
+    JOIN products p ON p.id = cd.prod_id
+    WHERE cm.user_id = ?
+    ORDER BY cd.prod_id
+");
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$total     = 0;
+$cartCount = 0;
+foreach ($items as $it) {
+    $total     += $it['price'] * $it['cqty'];
+    $cartCount += (int)$it['cqty'];
+}
+
+$flash = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
 ?>
 <!DOCTYPE html>
 <html lang="en">

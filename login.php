@@ -1,36 +1,38 @@
 <?php
-    session_start();
-    include 'connection.php';
+session_start();
+include 'connection.php';
 
-    $error = '';
+$error = '';
 
-    if(isset($_POST['login'])){
-        $username = trim($_POST['username']);
-        $password = trim($_POST['password']);
+if (isset($_POST['login'])) {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-        if(empty($username) || empty($password)){
-            $error = "Please enter both username and password.";
-        } else {
-            try {
-                $sql = "SELECT * FROM users WHERE username = :username LIMIT 1";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([':username' => $username]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (empty($username) || empty($password)) {
+        $error = "Please enter both username and password.";
+    } else {
+        try {
+            $sql = "SELECT * FROM users WHERE username = ? LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('s', $username);
+            $stmt->execute();
 
-              
-                if($user && $user['password'] === $password) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
-                    header("Location: index.php"); 
-                    exit();
-                } else {
-                    $error = "Invalid username or password.";
-                }
-            } catch (PDOException $e) {
-                $error = "An error occurred: " . $e->getMessage();
+            $user = $stmt->get_result()->fetch_assoc();
+
+            if ($user && $user['password'] === $password) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Invalid username or password.";
             }
+        } catch (mysqli_sql_exception $e) {
+            $error = "An error occurred: " . $e->getMessage();
         }
     }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +52,7 @@
                 <p class="text-muted">Sign in to manage your sales system.</p>
             </div>
 
-            <?php if(!empty($error)): ?>
+            <?php if (!empty($error)): ?>
                 <div class="alert alert-danger py-2 small"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
@@ -72,9 +74,12 @@
                 </div>
 
                 <button type="submit" name="login" class="btn btn-primary w-100 py-2 fw-semibold">Log In</button>
-                
+
                 <div class="text-center mt-3">
-                    <p class="small text-muted mb-0">Don't have an account yet? <a href="signup.php" class="text-decoration-none fw-semibold">Sign Up</a></p>
+                    <p class="small text-muted mb-0">
+                        Don't have an account yet?
+                        <a href="signup.php" class="text-decoration-none fw-semibold">Sign Up</a>
+                    </p>
                 </div>
             </form>
         </div>
