@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = (int)$_SESSION['user_id'];
 
-// No parameters, so a plain query() is fine
 $result = $conn->query("SELECT id, name, description, price, stock, image FROM products ORDER BY id DESC");
 $products = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -21,7 +20,6 @@ $stmt = $conn->prepare("
 $stmt->bind_param('i', $userId);
 $stmt->execute();
 
-// Equivalent to PDO's fetchColumn()
 $row = $stmt->get_result()->fetch_row();
 $cartCount = (int)($row[0] ?? 0);
 
@@ -48,7 +46,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         * { font-family: 'Poppins', sans-serif; }
         body { background: #f4f4f4; }
 
-        /* ===== Sidebar ===== */
         .sidebar {
             position: fixed;
             top: 0; left: 0;
@@ -108,7 +105,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         }
         .side-footer a { color: var(--accent); text-decoration: none; }
 
-        /* ===== Main area ===== */
         .main {
             margin-left: 270px;
             min-height: 100vh;
@@ -160,7 +156,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         }
         .page-sub { color: var(--text-gray); font-size: 15px; }
 
-        /* ===== Theme buttons ===== */
         .btn-theme {
             background: var(--accent);
             border: 1px solid var(--accent);
@@ -175,7 +170,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         .btn-outline-theme:hover { background: var(--accent); color: #fff; }
         .badge-theme { background: var(--accent); color: #fff; }
 
-        /* ===== Product cards ===== */
         .product-card {
             border: none;
             border-radius: 8px;
@@ -187,7 +181,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         }
         .product-card .card-title { font-weight: 600; font-size: 1rem; }
 
-        /* ===== Sidebar toggle behaviour ===== */
         .overlay {
             display: none;
             position: fixed;
@@ -210,9 +203,7 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 </head>
 <body>
 
-    <!-- Overlay for mobile sidebar -->
     <div class="overlay" id="overlay"></div>
-
     <!-- ===== Sidebar ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="profile">
@@ -252,10 +243,8 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         </div>
     </aside>
 
-    <!-- ===== Main ===== -->
     <div class="main">
 
-        <!-- Top bar -->
         <header class="topbar">
             <button class="menu-btn" id="menuToggle" type="button">
                 <i class="bi bi-list"></i>
@@ -276,7 +265,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                 </div>
             <?php endif; ?>
 
-            <!-- Page heading -->
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h1 class="page-title">Products</h1>
@@ -287,7 +275,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                 </button>
             </div>
 
-            <!-- Product Grid -->
             <?php if (empty($products)): ?>
                 <div class="text-center text-muted py-5">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
@@ -321,7 +308,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                                         <?php endif; ?>
                                     </p>
 
-                                    <!-- Edit + Add to Cart -->
                                     <div class="mt-auto">
                                         <a href="edit_product.php?id=<?= (int)$p['id'] ?>"
                                            class="btn btn-outline-theme btn-sm w-100 mb-2">
@@ -348,7 +334,6 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
         </div>
     </div>
 
-    <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="border-radius: 8px;">

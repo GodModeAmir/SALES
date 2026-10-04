@@ -34,28 +34,144 @@ if (isset($_POST['save'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Create Account — Sales System</title>
+    <style>
+        :root {
+            --sidebar-bg: #1c1c1c;
+            --accent: #f0a500;
+            --text-gray: #777;
+        }
+        * { font-family: 'Poppins', sans-serif; }
+        body { background: #f4f4f4; }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .login-card {
+            display: flex;
+            width: 100%;
+            max-width: 920px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 35px rgba(0,0,0,.1);
+        }
+
+        /* ===== Left brand panel (matches dashboard sidebar) ===== */
+        .login-brand {
+            width: 42%;
+            background: var(--sidebar-bg);
+            color: #fff;
+            padding: 50px 40px 30px;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-brand .brand-icon {
+            width: 115px; height: 115px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 46px;
+            color: #fff;
+            margin: 0 auto 25px;
+        }
+        .login-brand h4 { font-weight: 600; text-align: center; margin-bottom: 8px; }
+        .login-brand .brand-sub {
+            text-align: center;
+            color: #cfcfcf;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .brand-points { list-style: none; padding: 0 10px; margin: 0; }
+        .brand-points li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #cfcfcf;
+            font-size: 14px;
+            padding: 12px 2px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+        }
+        .brand-points li i { color: var(--accent); font-size: 17px; }
+        .brand-footer {
+            margin-top: auto;
+            padding-top: 25px;
+            font-size: 13px;
+            color: #9a9a9a;
+            line-height: 1.8;
+            text-align: center;
+        }
+        .brand-footer a { color: var(--accent); text-decoration: none; }
+
+        /* ===== Right form panel (matches main content area) ===== */
+        .login-panel { flex: 1; padding: 50px 48px; }
+        .page-title { font-weight: 600; color: #222; margin-bottom: 5px; }
+        .page-sub { color: var(--text-gray); font-size: 15px; }
+
+        .form-label { font-size: 13px; font-weight: 500; color: #555; }
+        .input-group-text { background: #f4f4f4; color: var(--text-gray); }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .2rem rgba(240,165,0,.15);
+        }
+
+        .btn-theme {
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            color: #fff;
+        }
+        .btn-theme:hover { background: #d89400; border-color: #d89400; color: #fff; }
+
+        .link-theme { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .link-theme:hover { color: #d89400; }
+
+        @media (max-width: 767px) {
+            .login-card { flex-direction: column; max-width: 480px; }
+            .login-brand { width: 100%; padding: 35px 30px 20px; }
+            .brand-points { display: none; }
+            .login-panel { padding: 35px 28px; }
+        }
+    </style>
 </head>
-<body class="bg-light-subtle">
+<body>
 
-    <div class="container min-vh-100 d-flex justify-content-center align-items-center py-5">
-        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
-            
-            <!-- Professional Registration Card -->
-            <div class="card border border-light-subtle shadow-sm rounded-3 p-4 p-sm-5 bg-white">
-                
-                <!-- Header / Logo Area -->
-                <div class="text-center mb-4">
-                    <div class="bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px;">
-                        <i class="bi bi-person-plus-fill fs-3"></i>
-                    </div>
-                    <h3 class="fw-bold text-dark mb-1">Create Account</h3>
-                    <p class="text-muted small mb-0">Fill in your details to get started</p>
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <!-- Left: brand panel (mirrors the sidebar) -->
+            <div class="login-brand">
+                <div class="brand-icon">
+                    <i class="bi bi-person-plus-fill"></i>
                 </div>
+                <h4>Join Sales System</h4>
+                <p class="brand-sub">Create your account and start managing products today.</p>
 
-                <!-- Dismissible Error Alert -->
+                <ul class="brand-points">
+                    <li><i class="bi bi-box-seam"></i> Browse &amp; manage products</li>
+                    <li><i class="bi bi-cart3"></i> Quick add-to-cart checkout</li>
+                    <li><i class="bi bi-shield-lock"></i> Secure member access</li>
+                </ul>
+
+                <div class="brand-footer">
+                    Copyright &copy;<?= date('Y') ?> All rights reserved |<br>
+                    Sales System — made with <a href="#">Colorlib style</a>
+                </div>
+            </div>
+
+            <!-- Right: signup form -->
+            <div class="login-panel">
+                <h1 class="page-title">Create Account</h1>
+                <p class="page-sub mb-4">Fill in your details to get started.</p>
+
                 <?php if (!empty($error)): ?>
                     <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 py-2 px-3 small rounded-2 mb-4" role="alert">
                         <i class="bi bi-exclamation-circle-fill flex-shrink-0"></i>
@@ -64,83 +180,65 @@ if (isset($_POST['save'])) {
                     </div>
                 <?php endif; ?>
 
-                <!-- Form -->
                 <form action="" method="POST" autocomplete="off">
-                    
-                    <!-- First & Last Name Row -->
+
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
-                            <label for="f_name" class="form-label small fw-medium text-secondary">First Name</label>
+                            <label for="f_name" class="form-label">First Name</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted ps-3">
-                                    <i class="bi bi-person"></i>
-                                </span>
-                                <input type="text" id="f_name" name="f_name" class="form-control border-start-0 py-2 ps-2" placeholder="" required autofocus>
+                                <span class="input-group-text border-end-0"><i class="bi bi-person"></i></span>
+                                <input type="text" id="f_name" name="f_name"
+                                       class="form-control border-start-0 py-2" placeholder="First name" required autofocus>
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <label for="l_name" class="form-label small fw-medium text-secondary">Last Name</label>
+                            <label for="l_name" class="form-label">Last Name</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted ps-3">
-                                    <i class="bi bi-person"></i>
-                                </span>
-                                <input type="text" id="l_name" name="l_name" class="form-control border-start-0 py-2 ps-2" placeholder="" required>
+                                <span class="input-group-text border-end-0"><i class="bi bi-person"></i></span>
+                                <input type="text" id="l_name" name="l_name"
+                                       class="form-control border-start-0 py-2" placeholder="Last name" required>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Email Input -->
                     <div class="mb-3">
-                        <label for="email" class="form-label small fw-medium text-secondary">Email Address</label>
+                        <label for="email" class="form-label">Email Address</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted ps-3">
-                                <i class="bi bi-envelope"></i>
-                            </span>
-                            <input type="email" id="email" name="email" class="form-control border-start-0 py-2 ps-2" placeholder="" required>
+                            <span class="input-group-text border-end-0"><i class="bi bi-envelope"></i></span>
+                            <input type="email" id="email" name="email"
+                                   class="form-control border-start-0 py-2" placeholder="you@example.com" required>
                         </div>
                     </div>
 
-                    <!-- Username Input -->
                     <div class="mb-3">
-                        <label for="username" class="form-label small fw-medium text-secondary">Username</label>
+                        <label for="username" class="form-label">Username</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted ps-3">
-                                <i class="bi bi-at"></i>
-                            </span>
-                            <input type="text" id="username" name="username" class="form-control border-start-0 py-2 ps-2" placeholder="" required>
+                            <span class="input-group-text border-end-0"><i class="bi bi-at"></i></span>
+                            <input type="text" id="username" name="username"
+                                   class="form-control border-start-0 py-2" placeholder="Choose a username" required>
                         </div>
                     </div>
 
-                    <!-- Password Input -->
                     <div class="mb-4">
-                        <label for="password" class="form-label small fw-medium text-secondary">Password</label>
+                        <label for="password" class="form-label">Password</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0 text-muted ps-3">
-                                <i class="bi bi-lock"></i>
-                            </span>
-                            <input type="password" id="password" name="password" class="form-control border-start-0 py-2 ps-2" placeholder="" required>
+                            <span class="input-group-text border-end-0"><i class="bi bi-lock"></i></span>
+                            <input type="password" id="password" name="password"
+                                   class="form-control border-start-0 py-2" placeholder="••••••••" required>
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" name="save" class="btn btn-primary w-100 py-2 fw-semibold rounded-2 mb-3">
-                        Create Account
+                    <button type="submit" name="save" class="btn btn-theme w-100 py-2 fw-semibold mt-2">
+                        <i class="bi bi-person-plus-fill me-1"></i>Create Account
                     </button>
                 </form>
 
-                <!-- Card Footer -->
-                <div class="text-center pt-3 border-top mt-2">
-                    <p class="small text-secondary mb-0">
-                        Already have an account? 
-                        <a href="login.php" class="text-primary fw-semibold text-decoration-none">Sign In</a>
+                <div class="text-center pt-4 mt-4 border-top">
+                    <p class="small mb-0" style="color: var(--text-gray);">
+                        Already have an account?
+                        <a href="login.php" class="link-theme">Sign In</a>
                     </p>
                 </div>
-
-            </div>
-
-            <!-- Page Bottom Copyright -->
-            <div class="text-center mt-4">
-                <p class="small text-muted mb-0">&copy; <?= date('Y') ?> Management System. All rights reserved.</p>
             </div>
 
         </div>
