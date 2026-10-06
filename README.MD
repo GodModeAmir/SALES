@@ -115,3 +115,45 @@ sales-system/
 │   └── product-form.png
 │
 └── README.md
+
+
+
+users
+  │
+  └── cart_master
+          │
+          └── cart_details
+                  │
+                  └── products
+
+
+
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500) DEFAULT NULL,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    stock INT NOT NULL DEFAULT 0,
+    image VARCHAR(255) DEFAULT NULL
+);
+
+CREATE TABLE cart_master (
+    cart_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE cart_details (
+    cart_id INT NOT NULL,
+    product_id INT NOT NULL,
+    cqty INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (cart_id) REFERENCES cart_master(cart_id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
