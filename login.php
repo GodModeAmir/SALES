@@ -12,19 +12,45 @@ if (isset($_POST['login'])) {
         $error = "Please enter both username and password.";
     } else {
         try {
-            $sql = "SELECT * FROM users WHERE username = ? LIMIT 1";
+            $sql = "SELECT u.*, r.role_name
+                    FROM users u
+                    INNER JOIN roles r ON u.role_id = r.role_id
+                    WHERE u.username = ?
+                    LIMIT 1";
+
             $stmt = $conn->prepare($sql);
             $stmt->bind_param('s', $username);
             $stmt->execute();
 
             $user = $stmt->get_result()->fetch_assoc();
 
-            if ($user && $user['password'] === $password) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
+            // Works with hashed passwords AND legacy plain-text passwords.
+            $passwordOk = $user && (
+                password_verify($password, $user['password']) ||
+                $user['password'] === $password
+            );
 
-                header("Location: index.php");
-                exit();
+            if ($passwordOk) {
+
+                $_SESSION['user_id']   = $user['user_id'];
+                $_SESSION['username']  = $user['username'];
+                $_SESSION['role_id']   = $user['role_id'];
+                $_SESSION['role_name'] = $user['role_name'];
+
+                // ===== ONE PAGE FOR ALL ROLES =====
+                // Everyone lands on index.php. The page decides which
+                // features to show based on the role in the session.
+                switch (strtoupper($user['role_name'])) {
+                    case 'SUPER_ADMIN':
+                    case 'ADMIN':
+                    case 'CUSTOMER':
+                        header("Location: index.php");
+                        exit();
+                    default:
+                        // No exit() — the form re-renders to show the error
+                        $error = "Unauthorized user role detected.";
+                        session_destroy();
+                }
             } else {
                 $error = "Invalid username or password.";
             }
