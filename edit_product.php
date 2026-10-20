@@ -2,13 +2,22 @@
 session_start();
 include 'connection.php';
 
+// ===== LOGIN CHECK =====
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Verify user still exists
-$stmt = $conn->prepare("SELECT id FROM users WHERE id = ?");
+// ===== ADMIN-ONLY CHECK =====
+// Customers who somehow reach this page (direct URL, crafted POST) are rejected.
+if (!in_array(strtoupper($_SESSION['role_name'] ?? ''), ['ADMIN', 'SUPER_ADMIN'])) {
+    $_SESSION['flash'] = ['type' => 'danger', 'message' => 'You are not allowed to edit products.'];
+    header("Location: index.php");
+    exit();
+}
+
+// Verify user still exists (fixed: column is user_id, matching your login.php)
+$stmt = $conn->prepare("SELECT user_id FROM users WHERE user_id = ?");
 $stmt->bind_param('i', $_SESSION['user_id']);
 $stmt->execute();
 
@@ -76,8 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('ssdssi', $name, $description, $price, $stock, $imagePath, $id);
         $stmt->execute();
 
-        // Delete old image file
-        if ($oldImage && strpos($oldImage, 'uploads/') === 0 && file_exists($oldImage)) {
+        // Delete old image file — but never the shared placeholder
+        if ($oldImage
+            && $oldImage !== 'uploads/placeholder.svg'
+            && strpos($oldImage, 'uploads/') === 0
+            && file_exists($oldImage)) {
             unlink($oldImage);
         }
     } else {
