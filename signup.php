@@ -4,25 +4,62 @@ include 'connection.php';
 $error = '';
 
 if (isset($_POST['save'])) {
-    $f_name   = trim($_POST['f_name']);
-    $l_name   = trim($_POST['l_name']);
-    $email    = trim($_POST['email']);
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
+    $f_name   = trim($_POST['f_name'] ?? '');
+    $l_name   = trim($_POST['l_name'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
 
     if (empty($f_name) || empty($l_name) || empty($email) || empty($username) || empty($password)) {
         $error = "All fields are required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Please enter a valid email address.";
+    } elseif (strlen($password) < 6) {
+        $error = "Password must be at least 6 characters.";
     } else {
         try {
-            $sql = "INSERT INTO users (f_name, l_name, email, username, password)
-                    VALUES (?, ?, ?, ?, ?)";
-
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param('sssss', $f_name, $l_name, $email, $username, $password);
+            // ===== 1. Look up the CUSTOMER role =====
+            $stmt = $conn->prepare("SELECT role_id FROM roles WHERE UPPER(role_name) = 'CUSTOMER' LIMIT 1");
             $stmt->execute();
+            $role = $stmt->get_result()->fetch_assoc();
 
-            header("Location: login.php");
-            exit();
+            if (!$role) {
+                $error = "Registration failed: CUSTOMER role not found in the roles table.";
+            } else {
+                $customerRoleId = (int)$role['role_id'];
+
+                // ===== 2. Check username and email SEPARATELY =====
+                $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ? LIMIT 1");
+                $stmt->bind_param('s', $username);
+                $stmt->execute();
+                $usernameTaken = (bool)$stmt->get_result()->fetch_assoc();
+
+                $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? LIMIT 1");
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $emailTaken = (bool)$stmt->get_result()->fetch_assoc();
+
+                if ($usernameTaken && $emailTaken) {
+                    $error = "Both that username and that email are already registered.";
+                } elseif ($usernameTaken) {
+                    $error = "That username is already taken.";
+                } elseif ($emailTaken) {
+                    $error = "That email address is already registered.";
+                } else {
+                    // ===== 3. Hash the password =====
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
+
+                    $sql = "INSERT INTO users (f_name, l_name, email, username, password, role_id)
+                            VALUES (?, ?, ?, ?, ?, ?)";
+
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param('sssssi', $f_name, $l_name, $email, $username, $hash, $customerRoleId);
+                    $stmt->execute();
+
+                    header("Location: login.php?registered=1");
+                    exit();
+                }
+            }
         } catch (mysqli_sql_exception $e) {
             $error = "Registration failed: " . $e->getMessage();
         }
