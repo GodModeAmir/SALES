@@ -8,6 +8,20 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = (int)$_SESSION['user_id'];
 
+// ===== ROLE VARIABLES — used for every visibility check below =====
+$role         = strtoupper($_SESSION['role_name'] ?? '');
+$isAdmin      = in_array($role, ['ADMIN', 'SUPER_ADMIN']); // can add & edit products
+$isSuperAdmin = ($role === 'SUPER_ADMIN');                  // can also manage users & roles
+
+// Page subtitle adapts to the role
+if ($isSuperAdmin) {
+    $pageSub = 'Full access: manage products, users, roles, and your cart.';
+} elseif ($isAdmin) {
+    $pageSub = 'Manage the catalog: add or edit products, or add them to your cart.';
+} else {
+    $pageSub = 'Browse the catalog and add products to your cart.';
+}
+
 $result = $conn->query("SELECT id, name, description, price, stock, image FROM products ORDER BY id DESC");
 $products = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -22,6 +36,25 @@ $stmt->execute();
 
 $row = $stmt->get_result()->fetch_row();
 $cartCount = (int)($row[0] ?? 0);
+
+// ===== SUPER_ADMIN ONLY: load the user list + roles for the dropdown =====
+$users = [];
+$rolesList = [];
+if ($isSuperAdmin) {
+    $res = $conn->query("
+        SELECT u.user_id, u.username, u.role_id, r.role_name
+        FROM users u
+        INNER JOIN roles r ON u.role_id = r.role_id
+        ORDER BY u.user_id ASC
+    ");
+    $users = $res->fetch_all(MYSQLI_ASSOC);
+
+    // Exclude SUPER_ADMIN from the dropdown — only one Super Admin is allowed
+    $res = $conn->query("SELECT role_id, role_name FROM roles
+                         WHERE UPPER(role_name) <> 'SUPER_ADMIN'
+                         ORDER BY role_id ASC");
+    $rolesList = $res->fetch_all(MYSQLI_ASSOC);
+}
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
@@ -70,6 +103,17 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
             color: #fff;
             margin-top: 15px;
             font-weight: 500;
+        }
+        .role-badge {
+            display: inline-block;
+            margin-top: 6px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 3px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
         }
         .side-nav {
             list-style: none;
@@ -211,6 +255,7 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                  onerror="this.onerror=null; this.src='uploads/placeholder.svg';"
                  alt="Profile">
             <h6>Welcome, <?= $username ?></h6>
+            <span class="role-badge"><?= htmlspecialchars($role ?: 'GUEST') ?></span>
         </div>
 
         <ul class="side-nav">
@@ -227,11 +272,20 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                     <?php endif; ?>
                 </a>
             </li>
+            <?php if ($isAdmin): // ===== ADMIN + SUPER_ADMIN only ===== ?>
             <li>
                 <a href="#" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     Add Product <i class="bi bi-plus-lg"></i>
                 </a>
             </li>
+            <?php endif; ?>
+            <?php if ($isSuperAdmin): // ===== SUPER_ADMIN only ===== ?>
+            <li>
+                <a href="#users-section">
+                    Users <i class="bi bi-people"></i>
+                </a>
+            </li>
+            <?php endif; ?>
             <li>
                 <a href="logout.php">Logout <i class="bi bi-box-arrow-right"></i></a>
             </li>
@@ -268,17 +322,19 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h1 class="page-title">Products</h1>
-                    <p class="page-sub mb-0">Browse the catalog, edit items, or add products to your cart.</p>
+                    <p class="page-sub mb-0"><?= $pageSub ?></p>
                 </div>
+                <?php if ($isAdmin): // ===== ADMIN + SUPER_ADMIN only ===== ?>
                 <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     <i class="bi bi-plus-lg me-1"></i>Add Product
                 </button>
+                <?php endif; ?>
             </div>
 
             <?php if (empty($products)): ?>
                 <div class="text-center text-muted py-5">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                    No products yet. Click <strong>Add Product</strong> to create one.
+                    No products yet<?= $isAdmin ? '. Click <strong>Add Product</strong> to create one.' : '.' ?>
                 </div>
             <?php else: ?>
                 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
@@ -309,10 +365,12 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                                     </p>
 
                                     <div class="mt-auto">
+                                        <?php if ($isAdmin): // ===== ADMIN + SUPER_ADMIN only ===== ?>
                                         <a href="edit_product.php?id=<?= (int)$p['id'] ?>"
                                            class="btn btn-outline-theme btn-sm w-100 mb-2">
                                             <i class="bi bi-pencil me-1"></i>Edit Product
                                         </a>
+                                        <?php endif; ?>
                                         <form action="add_to_cart.php" method="POST" class="d-flex gap-2">
                                             <input type="hidden" name="product_id" value="<?= (int)$p['id'] ?>">
                                             <input type="number" name="quantity" value="1" min="1"
@@ -331,9 +389,61 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+
+            <?php if ($isSuperAdmin): // ===== SUPER_ADMIN ONLY: users & role management ===== ?>
+            <div id="users-section" class="mt-5">
+                <h1 class="page-title">Users</h1>
+                <p class="page-sub mb-3">All registered accounts. The Super Admin account is locked and cannot be edited.</p>
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($users as $u): ?>
+                                    <?php $uIsSuper = (strtoupper($u['role_name']) === 'SUPER_ADMIN'); ?>
+                                    <tr>
+                                        <td><?= (int)$u['user_id'] ?></td>
+                                        <td>
+                                            <i class="bi bi-person-circle me-2 text-muted"></i><?= htmlspecialchars($u['username']) ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($uIsSuper): // ===== Super Admin account is locked ===== ?>
+                                                <span class="badge text-bg-dark">
+                                                    <i class="bi bi-lock-fill me-1"></i><?= htmlspecialchars($u['role_name']) ?><?= (int)$u['user_id'] === $userId ? ' (you)' : '' ?> — locked
+                                                </span>
+                                            <?php else: ?>
+                                                <form action="update_user_role.php" method="POST" class="d-flex gap-2 align-items-center">
+                                                    <input type="hidden" name="user_id" value="<?= (int)$u['user_id'] ?>">
+                                                    <select name="role_id" class="form-select form-select-sm" style="width: auto;">
+                                                        <?php foreach ($rolesList as $r): ?>
+                                                            <option value="<?= (int)$r['role_id'] ?>"
+                                                                <?= (int)$r['role_id'] === (int)$u['role_id'] ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($r['role_name']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-theme btn-sm">Save</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
+    <?php if ($isAdmin): // ===== ADMIN + SUPER_ADMIN ONLY: modal not rendered for customers ===== ?>
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="border-radius: 8px;">
@@ -383,6 +493,7 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
